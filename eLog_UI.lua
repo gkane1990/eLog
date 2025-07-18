@@ -83,7 +83,8 @@ end
 function UI:UpdateDisplay()
     if not self.mainFrame or not self.mainFrame:IsShown() then return end
 
-    eLogScrollFrame:SetVerticalScrollPosition(0) -- Reset scroll position
+    -- Reset scroll position using the correct API
+    eLogScrollFrame:SetVerticalScroll(0)
 
     local allLines = {}
     local sessions = eLog.db.profile.sessions
