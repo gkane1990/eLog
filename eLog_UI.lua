@@ -1,23 +1,21 @@
 -- File: eLog_UI.lua
 -- Purpose: Manages the creation, display, and interaction of all UI elements.
 
-local addonName, eLog = ...
+-- Correct way to get the addon object in a module file.
+local eLog = LibStub("AceAddon-3.0"):GetAddon("eLog")
 local UI = eLog:NewModule("UI", "AceEvent-3.0")
 
--- UI constants
 local colors = {
     text = { 0.9, 0.9, 0.9, 1 },
     highlight = { 1.0, 0.82, 0.0, 1 },
     background = { 0.1, 0.1, 0.1, 0.85 },
     border = { 0.3, 0.3, 0.3, 1.0 },
 }
--- Frame pool for recycling UI elements to improve performance.
 local framePool = {}
 local activeFrames = 0
 
 function UI:OnInitialize()
     self:CreateMainFrame()
-    -- Register for messages from other modules to keep the UI in sync.
     self:RegisterMessage("ELOG_ADDON_ENABLED", "UpdateDisplay")
     self:RegisterMessage("ELOG_ADDON_DISABLED", "Hide")
     self:RegisterMessage("ELOG_LINE_ADDED", "UpdateDisplay")
@@ -53,11 +51,9 @@ function UI:CreateMainFrame()
     title:SetPoint("TOP", 0, -8)
     title:SetText("eLog - Event Log")
 
-    -- Use a non-global name for the scroll frame to avoid conflicts.
-    local scroll = CreateFrame("ScrollFrame", "eLogScrollFrame_Internal", f, "UIPanelScrollFrameTemplate")
+    local scroll = CreateFrame("ScrollFrame", "eLogScrollFrame", f, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 10, -30)
     scroll:SetPoint("BOTTOMRIGHT", -30, 10)
-    self.scrollFrame = scroll -- Store a reference to it.
 
     local container = CreateFrame("Frame", nil, scroll)
     container:SetSize(400, 1)
@@ -87,17 +83,13 @@ end
 function UI:UpdateDisplay()
     if not self.mainFrame or not self.mainFrame:IsShown() then return end
 
-    -- Reset scroll position using our stored reference.
-    self.scrollFrame:SetVerticalScroll(0)
+    eLogScrollFrame:SetVerticalScrollPosition(0) -- Reset scroll position
 
-    -- Note: This section aggregates all lines from all sessions every update.
-    -- For most use cases, this is perfectly fine. For extreme performance needs,
-    -- one could implement a more complex system that only adds the newest line to the top.
     local allLines = {}
     local sessions = eLog.db.profile.sessions
     local sessionKeys = {}
     for k in pairs(sessions) do table.insert(sessionKeys, tonumber(k)) end
-    table.sort(sessionKeys, function(a, b) return a > b end) -- Sort descending (newest first)
+    table.sort(sessionKeys, function(a, b) return a > b end)
 
     for _, key in ipairs(sessionKeys) do
         local session = sessions[tostring(key)]
@@ -108,17 +100,19 @@ function UI:UpdateDisplay()
         end
     end
 
-    -- Hide all currently active frames before redrawing.
+	local linesCount = #allLines
     for i = 1, activeFrames do
-        if framePool[i] then framePool[i]:Hide() end
+        local frame = framePool[i]
+        if frame then
+            frame:Hide()
+        end
     end
     activeFrames = 0
 
     local yOffset = -10
-    if #allLines == 0 then
-        -- Display a "no logs" message.
-        activeFrames = 1
-        local frame = self:GetRecycledFrame(1)
+    if linesCount == 0 then
+        activeFrames = activeFrames + 1
+        local frame = self:GetRecycledFrame(activeFrames)
         frame.text:SetText("No logs available.")
         frame.fullText = nil
         frame:ClearAllPoints()
@@ -127,7 +121,6 @@ function UI:UpdateDisplay()
         frame:Show()
         self.container:SetHeight(18)
     else
-        -- Populate the view with all log lines.
         for i, entry in ipairs(allLines) do
             activeFrames = activeFrames + 1
             local frame = self:GetRecycledFrame(activeFrames)
@@ -148,18 +141,15 @@ function UI:UpdateDisplay()
         end
         self.container:SetHeight(math.abs(yOffset))
     end
-
-    -- Adjust container width based on whether the scrollbar is visible.
-    if self.container:GetHeight() > self.scrollFrame:GetHeight() then
-        self.container:SetWidth(self.mainFrame:GetWidth() - 40) -- Space for scrollbar
-    else
-        self.container:SetWidth(self.mainFrame:GetWidth() - 20)
-    end
+	if self.container:GetHeight() > self.mainFrame:GetHeight() then
+		self.container:SetWidth(self.mainFrame:GetWidth() - 30)
+	else
+		self.container:SetWidth(self.mainFrame:GetWidth() - 10)
+	end
 end
 
 function UI:GetRecycledFrame(index)
     if not framePool[index] then
-        -- Create a new line frame if the pool is not large enough.
         local frame = CreateFrame("Button", "eLogLineFrame" .. index, self.container)
         frame:SetWidth(self.container:GetWidth() - 10)
         
