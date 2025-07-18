@@ -1,0 +1,31 @@
+## Interface: 50500
+## Title: |T134328:16:16:0:0|t eLog |cff00ff00(v1.2)|r
+## Notes: Real-time event tracking with a session-based UI and powerful Ace3 features.
+## Author: Garbis Ciftci
+## Version: 1.2
+## DefaultState: enabled
+## SavedVariables: eLogDB
+## OptionalDeps: Ace3
+
+#@no-lib-strip@
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\AceAddon-3.0\AceAddon-3.0.xml
+Libs\AceEvent-3.0\AceEvent-3.0.xml
+Libs\AceDB-3.0\AceDB-3.0.xml
+Libs\AceDBOptions-3.0\AceDBOptions-3.0.xml
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\AceConfig-3.0\AceConfig-3.0.xml
+Libs\AceConsole-3.0\AceConsole-3.0.xml
+Libs\AceTimer-3.0\AceTimer-3.0.xml
+Libs\AceLocale-3.0\AceLocale-3.0.xml
+Libs\AceSerializer-3.0\AceSerializer-3.0.xml
+#@end-no-lib-strip@
+
+Locales\locales.xml
+
+eLog.lua
+eLog_Utils.lua
+eLog_Sessions.lua
+eLog_Options.lua
+eLog_UI.lua
